@@ -12,7 +12,7 @@ from embeds import setup_embed_command
 # --- KONFIGURACJA ---
 # Zaktualizowane ID (konwertowane na liczby)
 WELCOME_CHANNEL_ID = 1500979786103652365
-REQUIRED_ROLE_ID = 1457769309735485450 # Tutaj zostawiłem poprzednie ID, bo nie podałeś nowego dla roli admina
+REQUIRED_ROLE_ID => 1500979741191180318  # Tutaj zostawiłem poprzednie ID, bo nie podałeś nowego dla roli admina
 BARTUU_BLUE = 0x3498db
 
 ROLE_FILMY_ID = 1500979752368996392   # Dawniej TikTok
