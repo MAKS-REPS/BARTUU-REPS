@@ -24,10 +24,10 @@ class BartuuBot(commands.Bot):
 
     async def setup_hook(self):
         # Rejestracja widoków
-        self.add_view(RoleView(ROLE_FILMY_ID, ROLE_PROMOCJE_ID))
+        self.add_item_view = self.add_view(RoleView(ROLE_FILMY_ID, ROLE_PROMOCJE_ID))
         self.add_view(TicketView())
         
-        # Inicjalizacja komendy embed
+        # Inicjalizacja komendy embed - zmieniono, by nie wymagała konkretnego ID roli
         await setup_embed_command(self, None, BARTUU_BLUE)
         
         await self.tree.sync()
@@ -46,12 +46,12 @@ async def on_member_join(member):
 
 # --- KOMENDA /PANEL ---
 @bot.tree.command(name="panel", description="Wybierz typ panelu do wysłania")
-@app_commands.default_permissions(administrator=True) # <-- TA LINIJKA BLOKUJE OSOBY BEZ UPRAWNIEŃ
-@app_commands.choices(typ=[
-    app_commands.Choice(name="Tickety (Pomoc/Dostęp)", value="tickets"),
-    app_commands.Choice(name="Role (Pingi)", value="roles")
-])
+@app_commands.default_permissions(administrator=True) # Widoczne tylko dla osób z uprawnieniami Admina
 async def panel(interaction: discord.Interaction, typ: str):
+    # Podwójne sprawdzenie dla pewności
+    if not interaction.user.guild_permissions.administrator:
+        return await interaction.response.send_message("❌ Brak uprawnień.", ephemeral=True)
+
     if typ == "tickets":
         embed = discord.Embed(
             title="🚨 BARTUU REPS × CENTRUM POMOCY", 
