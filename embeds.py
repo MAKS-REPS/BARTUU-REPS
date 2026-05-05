@@ -3,14 +3,15 @@ from discord import app_commands
 
 async def setup_embed_command(bot, REQUIRED_ROLE_ID, Bartuu_BLUE):
     @bot.tree.command(name="embed", description="Wysyła spersonalizowany komunikat w ramce (Embed)")
+    @app_commands.default_permissions(administrator=True) # Widoczne tylko dla adminów
     @app_commands.describe(
         tytul="Nagłówek wiadomości",
         opis="Treść (możesz oznaczać role używając <@&ID_ROLI>)",
         kolor="Kolor paska HEX (np. #ff0000 lub zostaw puste)"
     )
     async def create_embed(interaction: discord.Interaction, tytul: str, opis: str, kolor: str = None):
-        # Sprawdzenie uprawnień
-        if not any(role.id == REQUIRED_ROLE_ID for role in interaction.user.roles):
+        # Sprawdzenie uprawnień administratora
+        if not interaction.user.guild_permissions.administrator:
             return await interaction.response.send_message("❌ Brak uprawnień do używania tej komendy.", ephemeral=True)
 
         # Logika koloru
@@ -23,9 +24,7 @@ async def setup_embed_command(bot, REQUIRED_ROLE_ID, Bartuu_BLUE):
         else:
             embed_color = Bartuu_BLUE
 
-        # Obsługa formatowania:
-        # 1. Zamiana \n na prawdziwe nowe linie
-        # 2. Discord sam zamieni <@&ID> na nazwę roli w opisie
+        # Obsługa formatowania tekstu
         format_opis = opis.replace("\\n", "\n")
         
         new_embed = discord.Embed(
@@ -34,10 +33,9 @@ async def setup_embed_command(bot, REQUIRED_ROLE_ID, Bartuu_BLUE):
             color=embed_color
         )
         
-        # Tutaj dodałem Twój znaczek:
-        new_embed.set_footer(text=f"Wysłane przez: {interaction.user.display_name} • Made By Maks.R3ps")
+        # Sekcja set_footer została całkowicie usunięta
 
-        # Wysłanie potwierdzenia (widoczne tylko dla Ciebie)
+        # Wysłanie potwierdzenia (widoczne tylko dla wywołującego)
         await interaction.response.send_message("✅ Embed wysłany!", ephemeral=True)
         
         # Wysłanie właściwego embeda na kanał
