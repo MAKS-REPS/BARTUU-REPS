@@ -3,18 +3,20 @@ from discord import app_commands
 
 async def setup_embed_command(bot, REQUIRED_ROLE_ID, Bartuu_BLUE):
     @bot.tree.command(name="embed", description="Wysyła spersonalizowany komunikat w ramce (Embed)")
-    @app_commands.default_permissions(administrator=True) # Widoczne tylko dla adminów
     @app_commands.describe(
         tytul="Nagłówek wiadomości",
         opis="Treść (możesz oznaczać role używając <@&ID_ROLI>)",
         kolor="Kolor paska HEX (np. #ff0000 lub zostaw puste)"
     )
     async def create_embed(interaction: discord.Interaction, tytul: str, opis: str, kolor: str = None):
-        # Sprawdzenie uprawnień administratora
-        if not interaction.user.guild_permissions.administrator:
+        # LISTA DOZWOLONYCH ID RÓL (Owner i Dev)
+        ALLOWED_ROLES = [1500979741191180318, 1501274158628343978]
+        
+        # Sprawdzanie czy użytkownik ma którąś z tych ról
+        user_role_ids = [role.id for role in interaction.user.roles]
+        if not any(role_id in ALLOWED_ROLES for role_id in user_role_ids):
             return await interaction.response.send_message("❌ Brak uprawnień do używania tej komendy.", ephemeral=True)
 
-        # Logika koloru
         if kolor:
             try:
                 hex_str = kolor.replace("#", "")
@@ -24,7 +26,6 @@ async def setup_embed_command(bot, REQUIRED_ROLE_ID, Bartuu_BLUE):
         else:
             embed_color = Bartuu_BLUE
 
-        # Obsługa formatowania tekstu
         format_opis = opis.replace("\\n", "\n")
         
         new_embed = discord.Embed(
@@ -33,10 +34,5 @@ async def setup_embed_command(bot, REQUIRED_ROLE_ID, Bartuu_BLUE):
             color=embed_color
         )
         
-        # Sekcja set_footer została całkowicie usunięta
-
-        # Wysłanie potwierdzenia (widoczne tylko dla wywołującego)
         await interaction.response.send_message("✅ Embed wysłany!", ephemeral=True)
-        
-        # Wysłanie właściwego embeda na kanał
         await interaction.channel.send(embed=new_embed)
