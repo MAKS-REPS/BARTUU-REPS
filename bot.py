@@ -10,12 +10,10 @@ from tickets import TicketView
 from embeds import setup_embed_command
 
 # --- KONFIGURACJA ---
-# Zaktualizowane ID (konwertowane na liczby)
 WELCOME_CHANNEL_ID = 1500979786103652365
-REQUIRED_ROLE_ID = 1500979741191180318  # Tutaj zostawiłem poprzednie ID, bo nie podałeś nowego dla roli admina
 BARTUU_BLUE = 0x3498db
 
-ROLE_FILMY_ID = 1500979752368996392   # Dawniej TikTok
+ROLE_FILMY_ID = 1500979752368996392
 ROLE_PROMOCJE_ID = 1500979750762451017
 
 intents = discord.Intents.all()
@@ -25,12 +23,12 @@ class BartuuBot(commands.Bot):
         super().__init__(command_prefix="!", intents=intents)
 
     async def setup_hook(self):
-        # Rejestracja widoków (Role i Tickety)
+        # Rejestracja widoków
         self.add_view(RoleView(ROLE_FILMY_ID, ROLE_PROMOCJE_ID))
         self.add_view(TicketView())
         
-        # Inicjalizacja komendy embed
-        await setup_embed_command(self, REQUIRED_ROLE_ID, BARTUU_BLUE)
+        # Inicjalizacja komendy embed (Ustawiamy True, by sprawdzało admina)
+        await setup_embed_command(self, None, BARTUU_BLUE)
         
         await self.tree.sync()
         print(f"✅ Bot {self.user} gotowy. System BARTUU REPS załadowany.")
@@ -53,9 +51,9 @@ async def on_member_join(member):
     app_commands.Choice(name="Role (Pingi)", value="roles")
 ])
 async def panel(interaction: discord.Interaction, typ: str):
-    # Sprawdzanie uprawnień
-    if not any(role.id == REQUIRED_ROLE_ID for role in interaction.user.roles):
-        return await interaction.response.send_message("❌ Brak uprawnień.", ephemeral=True)
+    # SPRAWDZANIE UPRAWNIEŃ: Czy użytkownik jest administratorem?
+    if not interaction.user.guild_permissions.administrator:
+        return await interaction.response.send_message("❌ Brak uprawnień. Musisz być administratorem.", ephemeral=True)
 
     if typ == "tickets":
         embed = discord.Embed(
