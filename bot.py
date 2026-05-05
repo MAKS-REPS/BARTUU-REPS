@@ -23,11 +23,11 @@ class BartuuBot(commands.Bot):
         super().__init__(command_prefix="!", intents=intents)
 
     async def setup_hook(self):
-        # Rejestracja widoków
-        self.add_item_view = self.add_view(RoleView(ROLE_FILMY_ID, ROLE_PROMOCJE_ID))
+        # Rejestracja widoków (aby przyciski działały po restarcie)
+        self.add_view(RoleView(ROLE_FILMY_ID, ROLE_PROMOCJE_ID))
         self.add_view(TicketView())
         
-        # Inicjalizacja komendy embed - zmieniono, by nie wymagała konkretnego ID roli
+        # Inicjalizacja komendy embed (None zamiast ID roli, bo używamy Admina)
         await setup_embed_command(self, None, BARTUU_BLUE)
         
         await self.tree.sync()
@@ -44,15 +44,18 @@ async def on_ready():
 async def on_member_join(member):
     await handle_welcome(member, WELCOME_CHANNEL_ID, BARTUU_BLUE)
 
-# --- KOMENDA /PANEL ---
+# --- KOMENDA /PANEL (Z POPRAWIONYM MENU WYBORU) ---
 @bot.tree.command(name="panel", description="Wybierz typ panelu do wysłania")
-@app_commands.default_permissions(administrator=True) # Widoczne tylko dla osób z uprawnieniami Admina
-async def panel(interaction: discord.Interaction, typ: str):
-    # Podwójne sprawdzenie dla pewności
-    if not interaction.user.guild_permissions.administrator:
-        return await interaction.response.send_message("❌ Brak uprawnień.", ephemeral=True)
+@app_commands.default_permissions(administrator=True)
+@app_commands.choices(typ=[
+    app_commands.Choice(name="Tickety (Pomoc/Dostęp)", value="tickets"),
+    app_commands.Choice(name="Role (Pingi)", value="roles")
+])
+async def panel(interaction: discord.Interaction, typ: app_commands.Choice[str]):
+    # Pobieramy wartość wybraną z menu (value)
+    wybor = typ.value
 
-    if typ == "tickets":
+    if wybor == "tickets":
         embed = discord.Embed(
             title="🚨 BARTUU REPS × CENTRUM POMOCY", 
             description="**Wybierz kategorię z menu poniżej, aby utworzyć zgłoszenie.**", 
@@ -60,7 +63,7 @@ async def panel(interaction: discord.Interaction, typ: str):
         )
         await interaction.response.send_message(embed=embed, view=TicketView())
     
-    elif typ == "roles":
+    elif wybor == "roles":
         embed = discord.Embed(
             title="☀️ BARTUU REPS × WYBIERZ PINGI",
             description="🎁 **Ping Promocje**\n→ Otrzymuj powiadomienia o promocjach!\n\n🎬 **Ping Filmy**\n→ Otrzymuj powiadomienia o nowych filmach!",
@@ -69,5 +72,6 @@ async def panel(interaction: discord.Interaction, typ: str):
         await interaction.response.send_message(embed=embed, view=RoleView(ROLE_FILMY_ID, ROLE_PROMOCJE_ID))
 
 # --- URUCHOMIENIE ---
+# Token brany z Railway Variables
 token = os.getenv('DISCORD_TOKEN')
 bot.run(token)
