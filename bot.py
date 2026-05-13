@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import os
+import typing  # Dodane dla obsługi wielu typów w komendzie ID
 
 # --- IMPORTY TWOICH MODUŁÓW ---
 from welcome import handle_welcome
@@ -27,7 +28,7 @@ class BartuuBot(commands.Bot):
         self.add_view(RoleView(ROLE_FILMY_ID, ROLE_PROMOCJE_ID))
         self.add_view(TicketView())
         
-        # Inicjalizacja komendy embed (None zamiast ID roli, bo używamy Admina)
+        # Inicjalizacja komendy embed
         await setup_embed_command(self, None, BARTUU_BLUE)
         
         await self.tree.sync()
@@ -44,7 +45,34 @@ async def on_ready():
 async def on_member_join(member):
     await handle_welcome(member, WELCOME_CHANNEL_ID, BARTUU_BLUE)
 
-# --- KOMENDA /PANEL (Z POPRAWIONYM MENU WYBORU) ---
+# --- KOMENDA /ID (NOWA) ---
+@bot.tree.command(name="id", description="Pobiera ID użytkownika, roli lub kanału")
+@app_commands.describe(obiekt="Oznacz kogoś, rolę lub kanał (puste = ID obecnego kanału)")
+@app_commands.default_permissions(administrator=True) # Tylko admin może sprawdzać ID
+async def get_id(interaction: discord.Interaction, obiekt: typing.Union[discord.Member, discord.Role, discord.TextChannel, discord.CategoryChannel, discord.VoiceChannel] = None):
+    if obiekt is None:
+        # Jeśli nic nie wybrano, podaj ID kanału i serwera
+        embed = discord.Embed(title="📍 ID Lokalizacji", color=BARTUU_BLUE)
+        embed.add_field(name="Kanał", value=f"`{interaction.channel.id}`", inline=True)
+        embed.add_field(name="Serwer", value=f"`{interaction.guild.id}`", inline=True)
+        return await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    # Logika sprawdzania typu obiektu
+    typ = "Obiekt"
+    if isinstance(obiekt, discord.Member): typ = "Użytkownik"
+    elif isinstance(obiekt, discord.Role): typ = "Rola"
+    elif isinstance(obiekt, discord.TextChannel): typ = "Kanał tekstowy"
+    elif isinstance(obiekt, discord.CategoryChannel): typ = "Kategoria"
+    elif isinstance(obiekt, discord.VoiceChannel): typ = "Kanał głosowy"
+
+    embed = discord.Embed(
+        title=f"🆔 Informacje: {obiekt.name}",
+        description=f"**Typ:** {typ}\n**ID:** `{obiekt.id}`",
+        color=BARTUU_BLUE
+    )
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+# --- KOMENDA /PANEL ---
 @bot.tree.command(name="panel", description="Wybierz typ panelu do wysłania")
 @app_commands.default_permissions(administrator=True)
 @app_commands.choices(typ=[
@@ -52,7 +80,6 @@ async def on_member_join(member):
     app_commands.Choice(name="Role (Pingi)", value="roles")
 ])
 async def panel(interaction: discord.Interaction, typ: app_commands.Choice[str]):
-    # Pobieramy wartość wybraną z menu (value)
     wybor = typ.value
 
     if wybor == "tickets":
@@ -72,6 +99,5 @@ async def panel(interaction: discord.Interaction, typ: app_commands.Choice[str])
         await interaction.response.send_message(embed=embed, view=RoleView(ROLE_FILMY_ID, ROLE_PROMOCJE_ID))
 
 # --- URUCHOMIENIE ---
-# Token brany z Railway Variables
 token = os.getenv('DISCORD_TOKEN')
 bot.run(token)
