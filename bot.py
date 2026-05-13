@@ -24,11 +24,16 @@ class BartuuBot(commands.Bot):
         super().__init__(command_prefix="!", intents=intents)
 
     async def setup_hook(self):
+        # Rejestracja widoków
         self.add_view(RoleView(ROLE_FILMY_ID, ROLE_PROMOCJE_ID))
         self.add_view(TicketView())
+        
+        # Inicjalizacja komendy embed
         await setup_embed_command(self, None, BARTUU_BLUE)
+        
+        # Synchronizacja komend
         await self.tree.sync()
-        print(f"✅ Bot {self.user} gotowy. System BARTUU REPS załadowany.")
+        print(f"✅ Komendy zsynchronizowane. Bot {self.user} gotowy.")
 
 bot = BartuuBot()
 
@@ -41,34 +46,40 @@ async def on_ready():
 async def on_member_join(member):
     await handle_welcome(member, WELCOME_CHANNEL_ID, BARTUU_BLUE)
 
-# --- ZAKTUALIZOWANA KOMENDA /ID ---
-@bot.tree.command(name="id", description="Pobiera ID użytkownika, roli lub kanału")
+# --- KOMENDA /ID (WERSJA POPRAWIONA I DZIAŁAJĄCA) ---
+@bot.tree.command(name="id", description="Pobiera ID oznaczonego obiektu")
 @app_commands.describe(
-    osoba_lub_rola="Wybierz osobę lub rolę",
-    kanal="Wybierz kanał (tekstowy, głosowy lub kategoria)"
+    oznacz_osobe_lub_role="Wybierz osobę lub rolę",
+    wybierz_kanal="Wybierz kanał z listy"
 )
 @app_commands.default_permissions(administrator=True)
 async def get_id(
     interaction: discord.Interaction, 
-    osoba_lub_rola: typing.Union[discord.Member, discord.Role] = None, 
-    kanal: typing.Union[discord.TextChannel, discord.CategoryChannel, discord.VoiceChannel] = None
+    oznacz_osobe_lub_role: typing.Optional[typing.Union[discord.Member, discord.Role]] = None,
+    wybierz_kanal: typing.Optional[discord.abc.GuildChannel] = None
 ):
-    # Wybieramy to, co użytkownik wskazał. Jeśli nic, bierzemy obecny kanał.
-    target = osoba_lub_rola or kanal or interaction.channel
+    # Wybieramy co sprawdzić: najpierw osoba/rola, potem kanał, na końcu obecny kanał
+    target = oznacz_osobe_lub_role or wybierz_kanal or interaction.channel
     
-    typ_nazwa = "Obiekt"
-    if isinstance(target, discord.Member): typ_nazwa = "Użytkownik"
-    elif isinstance(target, discord.Role): typ_nazwa = "Rola"
-    elif isinstance(target, discord.TextChannel): typ_nazwa = "Kanał tekstowy"
-    elif isinstance(target, discord.CategoryChannel): typ_nazwa = "Kategoria"
-    elif isinstance(target, discord.VoiceChannel): typ_nazwa = "Kanał głosowy"
+    # Rozpoznawanie typu dla czytelności
+    if isinstance(target, discord.Member): typ = "Użytkownik"
+    elif isinstance(target, discord.Role): typ = "Rola"
+    elif isinstance(target, discord.TextChannel): typ = "Kanał tekstowy"
+    elif isinstance(target, discord.CategoryChannel): typ = "Kategoria"
+    elif isinstance(target, discord.VoiceChannel): typ = "Kanał głosowy"
+    elif isinstance(target, discord.Thread): typ = "Wątek"
+    else: typ = "Obiekt"
 
     embed = discord.Embed(title="🆔 Informacje o ID", color=BARTUU_BLUE)
-    embed.add_field(name="Nazwa", value=f"{target.mention if hasattr(target, 'mention') else target.name}", inline=False)
-    embed.add_field(name="Typ", value=typ_nazwa, inline=True)
-    embed.add_field(name="ID", value=f"`{target.id}`", inline=True)
     
-    # Zawsze dodajemy ID serwera jako bonus
+    # Jeśli to nie kategoria, używamy mention (wzmianki)
+    mention_val = target.mention if hasattr(target, 'mention') else target.name
+    
+    embed.add_field(name="Nazwa/Oznaczenie", value=mention_val, inline=False)
+    embed.add_field(name="ID", value=f"`{target.id}`", inline=True)
+    embed.add_field(name="Typ", value=typ, inline=True)
+    
+    # Dodatkowo ID serwera
     embed.set_footer(text=f"ID Serwera: {interaction.guild.id}")
 
     await interaction.response.send_message(embed=embed, ephemeral=True)
