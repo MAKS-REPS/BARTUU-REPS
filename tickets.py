@@ -1,20 +1,23 @@
 import discord
 from discord import ui
 
-# --- KONFIGURACJA ZAKTUALIZOWANA ---
-ID_KATEGORII_TICKETOW = 1503426695787708608  # Twoje nowe ID
-REQUIRED_ROLE_ID = 1500979741191180318
+# --- KONFIGURACJA ID ---
+ID_KATEGORII_TICKETOW = 1503426695787708608
+ID_OWNER = 1500979741191180318
+ID_DEV = 1501274158628343978
+ID_SUPPORT = 1500979743040737412  # Twój nowy ID (zastąpił poprzedni dubel)
+
 BARTUU_BLUE = 0x3498db
 
 class TicketMenu(discord.ui.Select):
     def __init__(self):
         options = [
             discord.SelectOption(label="POMOC", description="Ogólna pomoc i pytania", emoji="❓"),
-            discord.SelectOption(label="POMOC Z ZAMÓWIENIEM", description="Kliknij, jeśli potrzebujesz pomocy z zamówieniem", emoji="🛒"),
-            discord.SelectOption(label="PROBLEM Z SHIPPINGIEM", description="Kliknij, jeśli masz problem z shippingiem", emoji="🚛"),
+            discord.SelectOption(label="POMOC Z ZAMÓWIENIEM", description="Pomoc z Twoim zamówieniem", emoji="🛒"),
+            discord.SelectOption(label="PROBLEM Z SHIPPINGIEM", description="Problemy z dostawą", emoji="🚛"),
         ]
         super().__init__(
-            placeholder="❌ Nie wybrano żadnej z kategorii", 
+            placeholder="Wybierz kategorię zgłoszenia...", 
             min_values=1, 
             max_values=1, 
             options=options, 
@@ -22,28 +25,33 @@ class TicketMenu(discord.ui.Select):
         )
 
     async def callback(self, interaction: discord.Interaction):
-        # 1. Informujemy Discorda, że pracujemy nad odpowiedzią (zapobiega błędowi interakcji)
         await interaction.response.defer(ephemeral=True)
         
         guild = interaction.guild
         category = guild.get_channel(ID_KATEGORII_TICKETOW)
-        admin_role = guild.get_role(REQUIRED_ROLE_ID)
+        
+        # Pobieranie ról do zmiennych
+        owner_role = guild.get_role(ID_OWNER)
+        support_role = guild.get_role(ID_SUPPORT)
+        dev_role = guild.get_role(ID_DEV)
         
         if not category:
-            return await interaction.followup.send("❌ Błąd: Nie znaleziono kategorii ticketów. Sprawdź ID.", ephemeral=True)
-        
-        if not admin_role:
-            return await interaction.followup.send("❌ Błąd: Nie znaleziono roli administracyjnej.", ephemeral=True)
+            return await interaction.followup.send("❌ Błąd: Kategoria ticketów nie istnieje (sprawdź ID).", ephemeral=True)
 
-        # Ustawienia uprawnień dla kanału
+        # Ustawienia uprawnień: kto ma widzieć kanał
         overwrites = {
             guild.default_role: discord.PermissionOverwrite(read_messages=False),
             interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True, read_message_history=True),
-            admin_role: discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True, read_message_history=True)
+            guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True)
         }
+
+        # Nadajemy dostęp rolom administracyjnym
+        if owner_role: overwrites[owner_role] = discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True)
+        if support_role: overwrites[support_role] = discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True)
+        if dev_role: overwrites[dev_role] = discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True)
         
         try:
-            # 2. Tworzenie kanału
+            # Tworzenie kanału
             channel = await guild.create_text_channel(
                 name=f"ticket-{interaction.user.name}", 
                 category=category, 
@@ -51,25 +59,33 @@ class TicketMenu(discord.ui.Select):
             )
             
             embed = discord.Embed(
-                title="🎫 BARTUU REPS × TICKET", 
-                description=f"Witaj {interaction.user.mention}!\nWybrałeś kategorię: **{self.values[0]}**.\nZaraz ktoś z administracji Ci pomoże.", 
+                title="🎫 BARTUU REPS × NOWY TICKET", 
+                description=(
+                    f"Witaj {interaction.user.mention}!\n\n"
+                    f"**Kategoria:** `{self.values[0]}`\n"
+                    "Ekipa BARTUU REPS zaraz się Tobą zajmie. Opisz swój problem poniżej.\n\n"
+                    "---"
+                ), 
                 color=BARTUU_BLUE
             )
-            embed.set_footer(text="System Ticketów • Bartuu Reps")
+            embed.set_footer(text="Administracja zostanie powiadomiona.")
             
-            await channel.send(content=f"{interaction.user.mention} | {admin_role.mention}", embed=embed)
+            # Budowanie stringa z pingami
+            pings = [interaction.user.mention]
+            if owner_role: pings.append(owner_role.mention)
+            if support_role: pings.append(support_role.mention)
+            if dev_role: pings.append(dev_role.mention)
             
-            # 3. Wysyłamy potwierdzenie używając followup, bo wcześniej użyliśmy defer
-            await interaction.followup.send(f"✅ Otwarto ticket: {channel.mention}", ephemeral=True)
+            # Wysłanie pingu i embeda na nowy kanał
+            await channel.send(content=" | ".join(pings), embed=embed)
+            
+            # Potwierdzenie dla użytkownika
+            await interaction.followup.send(f"✅ Ticket utworzony: {channel.mention}", ephemeral=True)
             
         except Exception as e:
-            await interaction.followup.send(f"❌ Wystąpił błąd podczas tworzenia kanału: {e}", ephemeral=True)
+            await interaction.followup.send(f"❌ Coś poszło nie tak: {e}", ephemeral=True)
 
 class TicketView(discord.ui.View):
     def __init__(self):
-        super().__init__(timeout=None) # View będzie działać nawet po restarcie bota
+        super().__init__(timeout=None) 
         self.add_item(TicketMenu())
-
-# --- PRZYKŁAD UŻYCIA W KOMENDZIE ---
-# Aby wysłać menu na kanał, użyj:
-# await ctx.send("Wybierz kategorię, aby otworzyć ticket:", view=TicketView())
