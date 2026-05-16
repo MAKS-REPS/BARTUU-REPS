@@ -64,7 +64,7 @@ async def on_member_join(member):
 @app_commands.describe(uzytkownik_lub_rola="Oznacz cel", kanal="Wybierz kanał")
 async def get_id(
     interaction: discord.Interaction, 
-    uzytkownik_lub_rola: typing.Optional[discord.abc.Mentionable] = None,
+    uzytkownik_lub_rola: typing.Optional[typing.Union[discord.Member, discord.Role]] = None,
     kanal: typing.Optional[discord.abc.GuildChannel] = None
 ):
     if not has_permission(interaction):
