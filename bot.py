@@ -17,7 +17,7 @@ BARTUU_BLUE = 0x3498db
 ROLE_FILMY_ID = 1505327273912303616
 ROLE_PROMOCJE_ID = 1505327272792690718
 
-# ROLE Z UPRAWNIENIAMI (OWNER, Admin, SUPPORT)
+# ROLE Z UPRAWNIENIAMI (OWNER, ADMIN, SUPPORT)
 ALLOWED_ROLES = [
     1505327259123322890, # Owner
     1505327260658302976, # Admin
@@ -57,7 +57,7 @@ async def on_ready():
 async def on_member_join(member):
     await handle_welcome(member, WELCOME_CHANNEL_ID, BARTUU_BLUE)
 
-# --- KOMENDA /ID (TYLKO DLA OWNER/DEV/SUPPORT) ---
+# --- KOMENDA /ID (TYLKO DLA OWNER/ADMIN/SUPPORT) ---
 @bot.tree.command(name="id", description="Sprawdź ID swoje, osoby, roli lub kanału")
 @app_commands.describe(uzytkownik_lub_rola="Oznacz cel", kanal="Wybierz kanał")
 async def get_id(
@@ -78,7 +78,7 @@ async def get_id(
 
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
-# --- KOMENDA /PANEL (TYLKO DLA OWNER/DEV/SUPPORT) ---
+# --- KOMENDA /PANEL (TYLKO DLA OWNER/ADMIN/SUPPORT) ---
 @bot.tree.command(name="panel", description="Wybierz typ panelu do wysłania")
 @app_commands.choices(typ=[
     app_commands.Choice(name="Tickety (Pomoc/Dostęp)", value="tickets"),
