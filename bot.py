@@ -45,8 +45,10 @@ bot = BartuuBot()
 
 # --- FUNKCJA SPRAWDZAJĄCA UPRAWNIENIA ---
 def has_permission(interaction: discord.Interaction):
-    user_role_ids = [role.id for role in interaction.user.roles]
-    return any(role_id in user_role_ids for role_id in ALLOWED_ROLES)
+    if hasattr(interaction.user, 'roles'):
+        user_role_ids = [role.id for role in interaction.user.roles]
+        return any(role_id in user_role_ids for role_id in ALLOWED_ROLES)
+    return False
 
 @bot.event
 async def on_ready():
@@ -62,7 +64,7 @@ async def on_member_join(member):
 @app_commands.describe(uzytkownik_lub_rola="Oznacz cel", kanal="Wybierz kanał")
 async def get_id(
     interaction: discord.Interaction, 
-    uzytkownik_lub_rola: typing.Optional[typing.Union[discord.Member, discord.Role]] = None,
+    uzytkownik_lub_rola: typing.Optional[discord.abc.Mentionable] = None,
     kanal: typing.Optional[discord.abc.GuildChannel] = None
 ):
     if not has_permission(interaction):
