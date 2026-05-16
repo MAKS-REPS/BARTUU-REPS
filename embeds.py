@@ -9,8 +9,8 @@ async def setup_embed_command(bot, REQUIRED_ROLE_ID, Bartuu_BLUE):
         kolor="Kolor paska HEX (np. #ff0000 lub zostaw puste)"
     )
     async def create_embed(interaction: discord.Interaction, tytul: str, opis: str, kolor: str = None):
-        # LISTA DOZWOLONYCH ID RÓL (Owner i Dev)
-        ALLOWED_ROLES = [1500979741191180318, 1501274158628343978]
+        # LISTA DOZWOLONYCH ID RÓL (Owner i Admin)
+        ALLOWED_ROLES = [1505327259123322890, 1505327260658302976]
         
         # Sprawdzanie czy użytkownik ma którąś z tych ról
         user_role_ids = [role.id for role in interaction.user.roles]
