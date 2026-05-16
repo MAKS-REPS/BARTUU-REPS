@@ -3,9 +3,9 @@ from discord import ui
 
 # --- KONFIGURACJA ID ---
 ID_KATEGORII_TICKETOW = 1503426695787708608
-ID_OWNER = 1500979741191180318
-ID_DEV = 1501274158628343978
-ID_SUPPORT = 1500979743040737412  # Twój nowy ID (zastąpił poprzedni dubel)
+ID_OWNER = 1505327259123322890
+ID_ADMIN = > 1505327260658302976
+ID_SUPPORT = 1505327262847991839  # Twój nowy ID (zastąpił poprzedni dubel)
 
 BARTUU_BLUE = 0x3498db
 
@@ -33,7 +33,7 @@ class TicketMenu(discord.ui.Select):
         # Pobieranie ról do zmiennych
         owner_role = guild.get_role(ID_OWNER)
         support_role = guild.get_role(ID_SUPPORT)
-        dev_role = guild.get_role(ID_DEV)
+        admin_role = guild.get_role(ID_ADMIN)
         
         if not category:
             return await interaction.followup.send("❌ Błąd: Kategoria ticketów nie istnieje (sprawdź ID).", ephemeral=True)
@@ -74,7 +74,7 @@ class TicketMenu(discord.ui.Select):
             pings = [interaction.user.mention]
             if owner_role: pings.append(owner_role.mention)
             if support_role: pings.append(support_role.mention)
-            if dev_role: pings.append(dev_role.mention)
+            if admin_role: pings.append(admin_role.mention)
             
             # Wysłanie pingu i embeda na nowy kanał
             await channel.send(content=" | ".join(pings), embed=embed)
