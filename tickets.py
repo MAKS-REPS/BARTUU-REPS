@@ -48,7 +48,7 @@ class TicketMenu(discord.ui.Select):
         # Nadajemy dostęp rolom administracyjnym
         if owner_role: overwrites[owner_role] = discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True)
         if support_role: overwrites[support_role] = discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True)
-        if dev_role: overwrites[dev_role] = discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True)
+        if admin_role: overwrites[admin_role] = discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True)
         
         try:
             # Tworzenie kanału
