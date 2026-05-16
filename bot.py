@@ -103,7 +103,6 @@ async def panel(interaction: discord.Interaction, typ: app_commands.Choice[str])
         await interaction.response.send_message(embed=embed, view=TicketView())
     
     elif wybor == "roles_all":
-        # Formatowanie zgodne z image_3.png
         embed = discord.Embed(
             title="☀️ BARTUU REPS × WYBIERZ PINGI",
             description=(
@@ -122,9 +121,16 @@ async def panel(interaction: discord.Interaction, typ: app_commands.Choice[str])
             description="→ Otrzymuj powiadomienia o promocjach!",
             color=discord.Color.red()
         )
-        view = RoleView(ROLE_FILMY_ID, ROLE_PROMOCJE_ID)
-        view.clear_items()
-        view.add_item(discord.ui.Button(label="Ping Promocje", style=discord.ButtonStyle.success, emoji="🎁", custom_id="role_promocje_btn"))
+        # Pobieramy oryginalny widok, aby wyciągnąć z niego działający przycisk
+        full_view = RoleView(ROLE_FILMY_ID, ROLE_PROMOCJE_ID)
+        view = discord.ui.View(timeout=None)
+        
+        for item in full_view.children:
+            # Sprawdzenie po ID przycisku (musi być identyczne z tym w roles.py)
+            if getattr(item, 'custom_id', None) == "role_promocje_btn":
+                view.add_item(item)
+                break
+                
         await interaction.response.send_message(embed=embed, view=view)
 
     elif wybor == "roles_tiktok":
@@ -133,9 +139,16 @@ async def panel(interaction: discord.Interaction, typ: app_commands.Choice[str])
             description="→ Otrzymuj powiadomienia o nowych filmach!",
             color=discord.Color.red()
         )
-        view = RoleView(ROLE_FILMY_ID, ROLE_PROMOCJE_ID)
-        view.clear_items()
-        view.add_item(discord.ui.Button(label="Ping TikTok", style=discord.ButtonStyle.secondary, emoji="🎬", custom_id="role_filmy_btn"))
+        # Pobieramy oryginalny widok, aby wyciągnąć z niego działający przycisk
+        full_view = RoleView(ROLE_FILMY_ID, ROLE_PROMOCJE_ID)
+        view = discord.ui.View(timeout=None)
+        
+        for item in full_view.children:
+            # Sprawdzenie po ID przycisku (musi być identyczne z tym w roles.py)
+            if getattr(item, 'custom_id', None) == "role_filmy_btn":
+                view.add_item(item)
+                break
+                
         await interaction.response.send_message(embed=embed, view=view)
 
 # --- URUCHOMIENIE ---
